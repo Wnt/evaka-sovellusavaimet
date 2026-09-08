@@ -1,0 +1,54 @@
+# SPDX-FileCopyrightText: 2017-2026 City of Espoo
+#
+# SPDX-License-Identifier: LGPL-2.1-or-later
+#
+# KYSYMYS: kuka kirjautuu kerta toisensa jälkeen ilman yhtäkään laite-evästettä?
+#
+# Signaali 2/6: NEW_DEVICE_LOGIN ja deviceAuthHistorySize.
+# Lokivirta: PALVELU, ei API-gateway. Tapahtuma kirjoitetaan luokassa
+#   evaka/core/pis/SystemController.kt, joten appName on "evaka-service",
+#   "trevaka-service" tai "evakaoulu-service" ja type on "app-misc".
+#   Alla suodatetaan type-kentällä, jotta appName-arvoa ei tarvitse kovakoodata.
+# Aikaväli: 30 vuorokautta. Kirjautumisia on vähän, joten lyhyt jakso ei riitä.
+#
+# Kentät on tarkistettu koodista: meta.eventCode = "NEW_DEVICE_LOGIN",
+#   meta.citizenIdHash (henkilön UUID:n SHA-256, sama arvo kuin userIdHash
+#   muissa lokeissa) ja meta.deviceAuthHistorySize.
+#
+# Tapahtuma kirjoitetaan ehdoitta aina, kun kirjautuva laite ei esitä omaa
+# laite-evästettään. Se on riippumaton siitä, onko uuden selaimen
+# kirjautumisilmoitussähköposti kytketty päälle (env.newBrowserLoginEmailEnabled
+# vaikuttaa vain sähköpostiin, ei lokitukseen).
+#
+# RAJAUS: tapahtuma syntyy vain salasanakirjautumisessa ja passkey-
+#   kirjautumisessa. Suomi.fi-tunnistautuminen ei kutsu checkForNewDevice-
+#   funktiota lainkaan, joten vahvasti tunnistautuvat kuntalaiset eivät näy
+#   tässä kyselyssä ollenkaan.
+#
+# Tulkinta: deviceAuthHistorySize = 0 tarkoittaa, ettei asiakas lähettänyt
+#   yhtäkään laite-evästettä (__Host-evaka-device-user-*, voimassa 90 vrk).
+#   Selain säilyttää evästeen, joten selainkäyttäjällä arvo on nollaa suurempi
+#   heti toisesta kirjautumisesta alkaen. Sama kuntalainen, jolla arvo on 0
+#   kymmenissä peräkkäisissä kirjautumisissa, ei aja selainta.
+#
+# VASTA-ESIMERKKI, joka on syytä tietää: ainakin yksi olemassa oleva
+#   integraatio säilyttää laite-evästeen tarkoituksella juuri tämän signaalin
+#   kiertämiseksi. Signaalin puuttuminen ei siis todista mitään.
+#
+# Väärä positiivinen: yksityisen selausikkunan käyttäjä, evästeensä säännöllisesti
+#   tyhjentävä käyttäjä ja joka kerta eri laitteelta kirjautuva käyttäjä
+#   tuottavat saman kuvion; siksi alla vaaditaan vähintään 5 tapahtumaa.
+# Väärä negatiivinen: laite-evästeen säilyttävä ohjelma katoaa kokonaan, samoin
+#   Suomi.fi-kirjautumista käyttävä ohjelma.
+
+fields meta.citizenIdHash as kuntalainen,
+       meta.deviceAuthHistorySize as evastehistoria
+| filter type = "app-misc"
+| filter meta.eventCode = "NEW_DEVICE_LOGIN"
+| stats count(*) as kirjautumisia,
+        min(evastehistoria) as pienin_historia,
+        max(evastehistoria) as suurin_historia
+  by kuntalainen
+| filter kirjautumisia >= 5 and suurin_historia = 0
+| sort kirjautumisia desc
+| limit 500

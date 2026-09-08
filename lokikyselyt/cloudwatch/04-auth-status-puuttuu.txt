@@ -1,0 +1,50 @@
+# SPDX-FileCopyrightText: 2017-2026 City of Espoo
+#
+# SPDX-License-Identifier: LGPL-2.1-or-later
+#
+# KYSYMYS: kuka käyttää kuntalaisrajapintaa kutsumatta kertaakaan
+#   /api/citizen/auth/status -päätepistettä?
+#
+# Signaali 4/6: auth/status-kutsun puuttuminen. Vahvin käyttäytymissignaali,
+#   joka on saatavilla ilman välityspalvelimen lokia.
+# Lokivirta: API-GATEWAY. appName = "evaka-api-gw",
+#   type = "app-requests-received". Laske vain tästä virrasta: se näkee
+#   jokaisen internetistä tulleen pyynnön tasan kerran.
+# Aikaväli: 1 vuorokausi kerrallaan (bin(1d) ryhmittelee UTC-vuorokausiin).
+#   Aja 7 kertaa peräkkäisille vuorokausille tai käytä 7 vuorokauden ikkunaa,
+#   jolloin saat rivin per kuntalainen per vuorokausi.
+#
+# Perustelu: kuntalaisen selainsovelluksen juuritason autentikaatioprovideri
+#   (frontend/src/citizen-frontend/auth/state.tsx -> auth/api.ts) kutsuu
+#   GET /citizen/auth/status jokaisella sivulatauksella. Osoite on
+#   /api/citizen/auth/status, koska selainsovelluksen API_URL on "/api".
+#   Ohjelmalla, jolla on istuntoeväste valmiina, ei ole mitään syytä kutsua
+#   sitä.
+#
+# HUOMAA: path sisältää tässä virrassa /api-etuliitteen. Palvelun virrassa sama
+#   polku olisi /citizen/auth/status ilman etuliitettä.
+#
+# Tulkinta: rivi tuloksessa tarkoittaa kuntalaista, joka teki mainitun määrän
+#   kuntalaisrajapinnan pyyntöjä vuorokaudessa tekemättä yhtäkään
+#   auth/status-kutsua. Mitä suurempi pyyntömäärä, sitä epätodennäköisempää on,
+#   että kyseessä on selain.
+#
+# Väärä positiivinen: erittäin pitkä yhtäjaksoinen selainistunto ilman
+#   sivulatausta voi teoriassa tuottaa nollan; käytännössä 32 minuutin liukuva
+#   istunto ja normaali navigointi tekevät tästä harvinaista, mutta raja-arvo
+#   (alla 20 pyyntöä) on siksi tarpeen.
+# Väärä negatiivinen: selainta jäljittelevä ohjelma, joka kutsuu auth/status
+#   säännöllisesti, katoaa tästä kokonaan; tunnistautumattomat pyynnöt on
+#   rajattu ulos, koska niitä ei voi liittää kehenkään.
+
+fields @timestamp
+| filter appName = "evaka-api-gw" and type = "app-requests-received"
+| filter strcontains(path, "/api/citizen/") = 1
+| filter userIdHash != ""
+| stats count(*) as pyynnot,
+        sum(strcontains(path, "/api/citizen/auth/status")) as status_kutsut,
+        count_distinct(path) as eri_polkuja
+  by userIdHash, bin(1d)
+| filter status_kutsut = 0 and pyynnot >= 20
+| sort pyynnot desc
+| limit 500

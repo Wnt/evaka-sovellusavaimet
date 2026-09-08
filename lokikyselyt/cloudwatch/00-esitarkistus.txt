@@ -1,0 +1,35 @@
+# SPDX-FileCopyrightText: 2017-2026 City of Espoo
+#
+# SPDX-License-Identifier: LGPL-2.1-or-later
+#
+# ESITARKISTUS: mitkä lokivirrat tässä kunnassa ovat olemassa
+#
+# Signaali: ei mikään kuudesta; tämä on edellytys kaikille muille.
+# Lokivirta: kaikki. Valitse kyselyyn yhtä aikaa kaikki lokiryhmät, joiden
+#   nimessä esiintyy proxy, api-gw, apigw tai service.
+# Aikaväli: 1 vuorokausi riittää.
+#
+# Tulkinta:
+#   - Rivi appName = "evaka-proxy" ja type = "app-requests-received"
+#     -> signaali 1 (käyttäjäagentti) on käytettävissä. Jatka kyselyyn 01a.
+#   - Ei riviä arvolla "evaka-proxy" -> tarkista ensin lokiryhmän valinta.
+#     nginx kirjoittaa vakiotulosteeseen, joten loki on siinä ryhmässä, johon
+#     välityspalvelinsäiliön tulostus on ohjattu, ja se voi olla eri ryhmä kuin
+#     API-gatewayn. Jos ryhmää ei ole lainkaan, ohjelmistoja ei voi nimetä;
+#     käytä signaaleja 2-6 ja merkitse arvio epävarmemmaksi.
+#   - Rivi appName = "evaka-service" / "trevaka-service" / "evakaoulu-service"
+#     -> palvelun virta on olemassa. Sitä tarvitaan vain kyselyssä 02.
+#   - Rivit type = "app-audit-events" ja "app-misc" appName-arvolla
+#     "evaka-api-gw" -> kyselyt 03a ja 06 ovat käytettävissä.
+#
+# Väärä positiivinen: ei sovellu; tämä on inventaario, ei päättelyä.
+# Väärä negatiivinen: virta voi olla olemassa mutta eri lokiryhmässä kuin
+#   valitsemasi. Tyhjä tulos ei todista, ettei virtaa kerätä.
+
+fields @timestamp
+| stats count(*) as rivit,
+        earliest(@timestamp) as vanhin,
+        latest(@timestamp) as uusin
+  by appName, type
+| sort rivit desc
+| limit 50

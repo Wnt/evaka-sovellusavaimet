@@ -1,0 +1,43 @@
+# SPDX-FileCopyrightText: 2017-2026 City of Espoo
+#
+# SPDX-License-Identifier: LGPL-2.1-or-later
+#
+# KYSYMYS: kenen liikenne jakautuu tasaisesti koko vuorokaudelle?
+#
+# Signaali 5/6: ajoituksen säännöllisyys, mitattuna eri viiden minuutin
+#   ikkunoiden lukumääränä vuorokaudessa.
+# Lokivirta: API-GATEWAY. appName = "evaka-api-gw",
+#   type = "app-requests-received".
+# Aikaväli: tasan 1 vuorokausi. Pidemmällä ikkunalla ikkunoiden lukumäärä ei
+#   ole enää verrattavissa alla olevaan raja-arvoon.
+#
+# Perustelu: vuorokaudessa on 288 viiden minuutin ikkunaa. Ihminen käyttää
+#   eVakaa muutamassa rypäässä, jolloin täyttyy tyypillisesti alle 20 ikkunaa.
+#   Viiden minuutin välein pollaava ohjelma täyttää lähes kaikki 288. Mitä
+#   lähempänä lukema on kahtasataa, sitä varmemmin kyseessä on ajastin.
+#
+# datefloor() pyöristää aikaleiman alaspäin annettuun jaksoon; count_distinct()
+#   laskee eri arvot. Kaikki jaksotus on UTC-ajassa, millä ei ole tämän kyselyn
+#   kannalta merkitystä, koska vuorokauden pituus on sama.
+#
+# Tulkinta: sarake ikkunoita on pääluku. Sarake pyynnot_per_ikkuna kertoo,
+#   kuinka monta pyyntöä ikkunaa kohti tehdään; ohjelmalla se on usein hyvin
+#   tasainen pieni luku, ihmisellä epätasainen.
+#
+# Väärä positiivinen: koko päivän eVakaa auki pitävä selainvälilehti, jossa on
+#   automaattinen päivitys, voi täyttää paljon ikkunoita; tarkista tällaiset
+#   tapaukset kyselyllä 04 ennen kuin laskette ne ohjelmiksi.
+# Väärä negatiivinen: kerran vuorokaudessa ajettava skripti täyttää yhden
+#   ikkunan ja on tässä mittarissa erottamaton ihmisestä.
+
+fields datefloor(@timestamp, 5m) as ikkuna
+| filter appName = "evaka-api-gw" and type = "app-requests-received"
+| filter strcontains(path, "/api/citizen/") = 1
+| filter userIdHash != ""
+| stats count(*) as pyynnot,
+        count_distinct(ikkuna) as ikkunoita,
+        count(*) / count_distinct(ikkuna) as pyynnot_per_ikkuna
+  by userIdHash
+| filter ikkunoita >= 50
+| sort ikkunoita desc
+| limit 500

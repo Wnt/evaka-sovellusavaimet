@@ -1,0 +1,52 @@
+# SPDX-FileCopyrightText: 2017-2026 City of Espoo
+#
+# SPDX-License-Identifier: LGPL-2.1-or-later
+#
+# KYSYMYS: kuka törmää kirjautumisrajoittimeen toistuvasti?
+#
+# Signaali 3/6: kirjautumistiheys, jyrkin muotonsa.
+# Lokivirta: ensisijaisesti VÄLITYSPALVELIN (kysely A), koska vain siinä on
+#   kuntalaisen todellinen clientIp ja userAgent. Varalla API-GATEWAY
+#   (kysely B), jos välityspalvelimen lokia ei kerätä; siinä clientIp on
+#   edellinen välityspalvelin eikä kuntalainen, joten se ei erottele asiakkaita.
+# Aikaväli: 7 vuorokautta.
+#
+# Perustelu: kuntalaisen salasanakirjautumisen rajoitin on oletuksena 20
+#   yritystä käyttäjätunnusta kohti tunnissa (CITIZEN_WEAK_LOGIN_RATE_LIMIT: 20,
+#   apigw/src/shared/config.ts). Rajan ylitys palauttaa 429. Ihminen ei kirjoita
+#   salasanaansa 20 kertaa tunnissa, saati useana tuntina peräkkäin.
+#
+# HUOMAA: rajoittimen laukeaminen kirjoittaa myös app-misc-viestin
+#   "Login request hit rate limit", jonka meta.username on kuntalaisen
+#   SÄHKÖPOSTIOSOITE selväkielisenä. Älä hae sitä viestiä. Alla käytetään
+#   pelkkää HTTP-vastauskoodia, jossa henkilötietoa ei ole.
+#
+# HUOMAA MYÖS: statusCode on molemmissa näissä virroissa MERKKIJONO. Muoto
+#   `filter statusCode = 429` ei löydä mitään.
+#
+# Tulkinta: yksittäinen 429 on unohtunut salasana. Kymmeniä 429-vastauksia
+#   useana perättäisenä tuntina samasta osoitteesta on automaatti. Vertaa
+#   tulosta kyselyyn 03a: sama kuntalainen molemmissa on vahva havainto.
+#
+# Väärä positiivinen: yhteisestä NAT-osoitteesta tulevat eri kuntalaiset voivat
+#   näyttää yhdeltä hyvin aktiiviselta asiakkaalta; myös aito
+#   salasanan arvausyritys tuottaa saman kuvion eikä ole kuntalaisen oma ohjelma.
+# Väärä negatiivinen: oikein toimiva ohjelma, joka säilyttää istunnon tai
+#   kirjautuu harvoin, ei törmää rajaan koskaan.
+
+# --- Kysely A: välityspalvelimen loki (suositeltu) ---
+fields @timestamp
+| filter appName = "evaka-proxy" and type = "app-requests-received"
+| filter path = "/api/citizen/auth/weak-login" and statusCode = "429"
+| stats count(*) as estettyja by clientIp, userAgent, bin(1h)
+| filter estettyja >= 5
+| sort estettyja desc
+| limit 500
+
+# --- Kysely B: API-gateway, jos välityspalvelimen lokia ei ole ---
+# fields @timestamp
+# | filter appName = "evaka-api-gw" and type = "app-requests-received"
+# | filter path = "/api/citizen/auth/weak-login" and statusCode = "429"
+# | stats count(*) as estettyja by bin(1h)
+# | sort @timestamp asc
+# | limit 500

@@ -1,0 +1,62 @@
+# SPDX-FileCopyrightText: 2017-2026 City of Espoo
+#
+# SPDX-License-Identifier: LGPL-2.1-or-later
+#
+# KYSYMYS: kuka lähettää kirjautumispyynnön ilman x-evaka-csrf-otsaketta?
+#
+# Signaali 6/6: CSRF-tunnusmerkki. Tarkkuus lähes täydellinen, kattavuus huono.
+# Lokivirta: API-GATEWAY, sekä pyyntöloki että tarkastusloki. Molemmat tulevat
+#   saman prosessin vakiotulosteesta, joten ne ovat yleensä samassa
+#   lokiryhmässä. Jos kunnan keräys erottelee ne eri ryhmiin, valitse
+#   kyselyyn molemmat ryhmät.
+# Aikaväli: 7-30 vuorokautta.
+#
+# Perustelu: väliohjelmisto apigw/src/shared/middleware/csrf.ts vaatii
+#   otsakkeen x-evaka-csrf kaikilta muilta kuin GET-, HEAD- ja OPTIONS-
+#   pyynnöiltä. Se on rekisteröity ENNEN reittikäsittelijöitä
+#   (`router.use(csrf)` app.ts:ssä), ja puuttuva otsake päätyy vastaukseen 403
+#   (error-handler.ts). Reittikäsittelijä kirjoittaa tarkastustapahtuman
+#   evaka.citizen_weak.sign_in_requested heti ensimmäisenä rivinään — mutta
+#   vain jos suoritus ylipäätään pääsee sinne asti.
+#
+#   Siis: puuttuva CSRF-otsake  -> 403 EIKÄ sign_in_requested-tapahtumaa
+#         väärä salasana        -> 403 JA sign_in_requested-tapahtuma
+#
+#   Selain ei voi tuottaa ensimmäistä kuviota: kuntalaisen selainsovellus
+#   asettaa otsakkeen oletusarvoisesti kaikkiin pyyntöihinsä
+#   (frontend/src/citizen-frontend/api-client.ts).
+#
+# LIITOS: Logs Insightsissa ei ole join-operaatiota. Alla oleva kysely kiertää
+#   sen ryhmittelemällä traceId:n mukaan ja laskemalla, montako kumpaakin
+#   tyyppiä samaan pyyntöön liittyy. traceId on sama molemmissa riveissä, koska
+#   molemmat kirjoitetaan samasta pyynnöstä samalla traceId-arvolla.
+#
+# HUOMAA: statusCode on tässä virrassa MERKKIJONO. Vertailu on "403".
+# HUOMAA MYÖS: signaali toimii vain POST-, PUT- ja DELETE-pyynnöillä, koska
+#   GET on vapautettu CSRF-tarkistuksesta kokonaan.
+#
+# Tulos on lista traceId-arvoja. Rivien lukumäärä on tapausten lukumäärä.
+# Yhdistäminen kuntalaiseen ei onnistu, koska pyyntö torjutaan ennen
+# tunnistautumista: userIdHash on näissä riveissä tyhjä. Signaali kertoo siis
+# tapahtumien määrän, ei käyttäjien määrää.
+#
+# Väärä positiivinen: käytännössä ei mitään; ainoa tunnettu poikkeus on
+#   selainlaajennus tai välityspalvelin, joka riisuu mukautettuja otsakkeita.
+# Väärä negatiivinen: valtaosa ohjelmista lisää otsakkeen ensimmäisen 403:n
+#   jälkeen, joten signaali näkyy vain kehitysvaiheessa; se ei löydä yhtäkään
+#   toimivaa integraatiota.
+
+fields @timestamp
+| filter appName = "evaka-api-gw"
+| filter (type = "app-requests-received"
+          and httpMethod = "POST"
+          and path = "/api/citizen/auth/weak-login")
+      or (type = "app-audit-events"
+          and eventCode = "evaka.citizen_weak.sign_in_requested")
+| stats sum(strcontains(type, "app-audit-events")) as tarkastustapahtumia,
+        sum(strcontains(type, "app-requests-received")) as pyyntorivit,
+        sortsLast(statusCode) as tila
+  by traceId
+| filter pyyntorivit > 0 and tarkastustapahtumia = 0 and tila = "403"
+| sort pyyntorivit desc
+| limit 1000

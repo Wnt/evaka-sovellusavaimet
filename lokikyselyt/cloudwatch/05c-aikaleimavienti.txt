@@ -1,0 +1,55 @@
+# SPDX-FileCopyrightText: 2017-2026 City of Espoo
+#
+# SPDX-License-Identifier: LGPL-2.1-or-later
+#
+# KYSYMYS: kuinka säännöllinen yksittäisen epäillyn pyyntörytmi on?
+#
+# Signaali 5/6: peräkkäisten pyyntöjen aikavälien variaatiokerroin.
+# Lokivirta: API-GATEWAY. appName = "evaka-api-gw",
+#   type = "app-requests-received".
+# Aikaväli: 1-7 vuorokautta yhtä kuntalaista kohti.
+#
+# MITÄ LOGS INSIGHTS EI OSAA: variaatiokerroin lasketaan peräkkäisten
+#   aikaleimojen erotuksista. Logs Insightsissa ei ole ikkunafunktioita eikä
+#   lag()-vastinetta, joten erotusta ei voi laskea kyselykielessä lainkaan.
+#   Kyselyä ei siis voi kirjoittaa loppuun asti; alla oleva kysely vie
+#   aikaleimat ulos ja laskenta tehdään yhdellä komennolla sen jälkeen. Jos
+#   kunta käyttää OpenSearchia, siellä sama saadaan yhdellä kyselyllä
+#   (extended_stats_bucket) — katso opensearch/kyselyt.md.
+#
+# VAIHE 1: hae kyselyn 04 tai 05a tuloksesta yksi userIdHash ja liitä se alle.
+# VAIHE 2: aja kysely ja vie tulos CSV:nä (Export results).
+# VAIHE 3: laske variaatiokerroin viedystä tiedostosta:
+#
+#   python3 - <<'EOF'
+#   import csv, statistics, sys
+#   from datetime import datetime
+#   ajat = []
+#   with open("vienti.csv") as f:
+#       for rivi in csv.DictReader(f):
+#           ajat.append(datetime.fromisoformat(rivi["@timestamp"].replace(" ", "T")))
+#   ajat.sort()
+#   valit = [(b - a).total_seconds() for a, b in zip(ajat, ajat[1:])]
+#   ka = statistics.mean(valit)
+#   kh = statistics.pstdev(valit)
+#   print(f"n={len(valit)} keskiarvo={ka:.1f} s keskihajonta={kh:.1f} s "
+#         f"variaatiokerroin={kh/ka:.3f}")
+#   EOF
+#
+# Tulkinta: variaatiokerroin (keskihajonta jaettuna keskiarvolla) on
+#   ajastetulla ohjelmalla lähellä nollaa; alle 0,1 on käytännössä kello.
+#   Ihmisen selailussa se on tyypillisesti selvästi yli 1, koska tauot ovat
+#   eripituisia. Välissä oleva alue 0,1-1 ei ratkaise mitään suuntaan.
+#
+# Väärä positiivinen: sivupohjan yhdellä latauksella laukaisemat rinnakkaiset
+#   pyynnöt ovat hyvin lähellä toisiaan ja voivat painaa kerrointa alas, jos
+#   kuntalainen tekee vain muutaman sivulatauksen; vaadi vähintään sata pyyntöä.
+# Väärä negatiivinen: satunnaisviiveen (jitter) lisäävä ohjelma nostaa kertoimen
+#   ihmisen tasolle tarkoituksella.
+
+fields @timestamp, path, httpMethod, statusCode
+| filter appName = "evaka-api-gw" and type = "app-requests-received"
+| filter strcontains(path, "/api/citizen/") = 1
+| filter userIdHash = "LIITÄ_TÄHÄN_USERIDHASH"
+| sort @timestamp asc
+| limit 10000

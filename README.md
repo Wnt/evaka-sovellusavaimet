@@ -19,6 +19,7 @@ Aineisto kertoo suoraan, mitä avain tavoittaa: myös lapsen toisen huoltajan vi
 | [Tietoturva-arvio](tietoturva-arvio.md) | Tietoturvasta vastaava | Kannattaako muutos: vertailukohta, luottamusmalli, mitä avain paljastaa, jäljelle jäävät riskit |
 | [Uhkamalli](uhkamalli.md) | Tietoturvakatselmoija | Hyökkääjäasemat, kontrollit ja jäännösriskit koodista luettuna |
 | [Integraattorin opas](integraattorin-opas.md) | Kuntalainen, joka kirjoittaa ohjelman | Avaimen luonti, pyynnön muoto, oikeudet kenttätasolla, virheet, vastuu |
+| [Lokikyselyt](lokikyselyt/) | Kunnan lokeista vastaava, päätösesityksen valmistelija | Valmiit CloudWatch- ja OpenSearch-kyselyt, joilla kunta mittaa omista lokeistaan, kuinka suuri osa kuntalaisrajapinnan liikenteestä tulee ohjelmilta |
 
 Lukemisjärjestys ensi kertaa: **päätösesitys** antaa kokonaiskuvan viidessä minuutissa, **DPIA-aineisto** oikeudellisen perustan ja **uhkamalli** tekniset yksityiskohdat. Ydinrepositoriossa pysyvät [tekninen tiivistelmä](https://github.com/espoon-voltti/evaka/blob/master/docs/sovellusavaimet/tekninen-tiivistelma.md) ja [vuototilanne ja avainkierto](https://github.com/espoon-voltti/evaka/blob/master/docs/sovellusavaimet/vuototilanne-ja-avainkierto.md).
 

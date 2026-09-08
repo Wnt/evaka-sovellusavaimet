@@ -1,0 +1,41 @@
+# SPDX-FileCopyrightText: 2017-2026 City of Espoo
+#
+# SPDX-License-Identifier: LGPL-2.1-or-later
+#
+# KYSYMYS: kuka käyttää kuntalaisrajapintaa klo 02-05 Suomen aikaa?
+#
+# Signaali 5/6: ajoituksen säännöllisyys, yöaktiivisuuden muodossa.
+# Lokivirta: API-GATEWAY. appName = "evaka-api-gw",
+#   type = "app-requests-received".
+# Aikaväli: 7-30 vuorokautta.
+#
+# AIKAVYÖHYKE: Logs Insightsin bin() ja datefloor() toimivat UTC-ajassa eikä
+#   kellonajan poimintaan ole omaa funktiota, joten tunti irrotetaan lokirivin
+#   raakatekstistä parse-komennolla. Lokien @timestamp-kenttä on kirjoitettu
+#   UTC-ajassa kaikissa kolmessa virrassa.
+#     Suomen kesäaika (UTC+3): klo 02-05 = UTC 23, 00, 01, 02
+#     Suomen talviaika (UTC+2): klo 02-05 = UTC 00, 01, 02, 03
+#   Alla on oletuksena kesäaika. Vaihda listaa, jos mittausjakso on talviajalla,
+#   tai rajaa mittausjakso kokonaan yhden aikavyöhykkeen sisään.
+#
+# Tulkinta: yksittäinen yökäyttö on valvova vanhempi. Yökäyttöä joka yö,
+#   suunnilleen samaan kellonaikaan, ei ole. Katso sarake eri_oita: se kertoo,
+#   kuinka monena eri vuorokautena kuntalainen on ollut liikkeellä yöllä.
+#
+# Väärä positiivinen: vuorotyöläinen ja ulkomailla toisessa aikavyöhykkeessä
+#   oleva huoltaja käyttävät eVakaa aidosti yöllä.
+# Väärä negatiivinen: virka-aikaan ajastettu ohjelma ei näy tässä lainkaan,
+#   ja tämä on käyttäytymissignaaleista heikoin; älä käytä sitä yksinään.
+
+fields @timestamp
+| parse @message /"@timestamp":"(?<paiva>\d{4}-\d{2}-\d{2})T(?<tunti>\d{2}):/
+| filter appName = "evaka-api-gw" and type = "app-requests-received"
+| filter strcontains(path, "/api/citizen/") = 1
+| filter userIdHash != ""
+| filter tunti in ["23", "00", "01", "02"]
+| stats count(*) as yopyynnot,
+        count_distinct(paiva) as eri_oita
+  by userIdHash
+| filter eri_oita >= 5
+| sort yopyynnot desc
+| limit 500

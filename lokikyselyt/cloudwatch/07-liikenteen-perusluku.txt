@@ -1,0 +1,51 @@
+# SPDX-FileCopyrightText: 2017-2026 City of Espoo
+#
+# SPDX-License-Identifier: LGPL-2.1-or-later
+#
+# KYSYMYS: mikä on kuntalaisrajapinnan kokonaisliikenne, johon osuutta
+#   verrataan?
+#
+# Signaali: ei mikään kuudesta. Tämä on nimittäjä, jota ilman muiden
+#   kyselyiden tuloksia ei voi esittää osuutena.
+# Lokivirta: API-GATEWAY, ja VAIN se. appName = "evaka-api-gw",
+#   type = "app-requests-received". Sama pyyntö näkyy myös välityspalvelimen ja
+#   palvelun lokissa; jos lasket ne yhteen, saat kaksin- tai kolminkertaisen
+#   luvun. API-gateway näkee jokaisen internetistä tulleen pyynnön tasan kerran.
+# Aikaväli: sama kuin muissa kyselyissä, tyypillisesti 7 vuorokautta.
+#
+# Terveystarkistukset eivät ole mukana: /health ja /ready on rekisteröity
+# ennen lokitusvälikettä (apigw/src/index.ts).
+#
+# Kysely A antaa kokonaispyyntömäärän ja kysely B tunnistautuneiden
+# kuntalaisten lukumäärän vuorokaudessa. Ne ovat erillisiä, koska
+# tunnistautumattomat pyynnöt on rajattava pois vasta käyttäjiä laskettaessa,
+# ei kokonaismäärästä.
+#
+# Väärä positiivinen: ei sovellu.
+# Väärä negatiivinen: ei sovellu.
+
+# --- Kysely A: kuntalaisrajapinnan pyynnöt vuorokaudessa ---
+fields @timestamp
+| filter appName = "evaka-api-gw" and type = "app-requests-received"
+| filter strcontains(path, "/api/citizen/") = 1
+| stats count(*) as pyynnot by bin(1d)
+| sort @timestamp asc
+
+# --- Kysely B: tunnistautuneet kuntalaiset ja heidän pyyntömääränsä ---
+# fields @timestamp
+# | filter appName = "evaka-api-gw" and type = "app-requests-received"
+# | filter strcontains(path, "/api/citizen/") = 1
+# | filter userIdHash != ""
+# | stats count(*) as pyynnot,
+#         count_distinct(userIdHash) as kuntalaisia
+#   by bin(1d)
+# | sort @timestamp asc
+
+# --- Kysely C: pyyntömäärä kuntalaista kohti, jakauman katsomiseen ---
+# fields @timestamp
+# | filter appName = "evaka-api-gw" and type = "app-requests-received"
+# | filter strcontains(path, "/api/citizen/") = 1
+# | filter userIdHash != ""
+# | stats count(*) as pyynnot by userIdHash
+# | sort pyynnot desc
+# | limit 1000

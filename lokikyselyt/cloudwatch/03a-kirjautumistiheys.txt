@@ -1,0 +1,46 @@
+# SPDX-FileCopyrightText: 2017-2026 City of Espoo
+#
+# SPDX-License-Identifier: LGPL-2.1-or-later
+#
+# KYSYMYS: kuka kirjautuu useammin kuin istunnon kesto edellyttäisi?
+#
+# Signaali 3/6: kirjautumistiheys suhteessa 32 minuutin liukuvaan istuntoon.
+# Lokivirta: API-GATEWAY, tarkastusloki. appName = "evaka-api-gw",
+#   type = "app-audit-events", eventCode = "evaka.citizen_weak.sign_in".
+#   Tapahtumakoodi muodostetaan tiedostossa
+#   apigw/src/enduser/routes/auth-weak-login.ts muodossa
+#   `evaka.citizen_weak.${nimi}`.
+# Aikaväli: 7 vuorokautta.
+#
+# Perustelu: kuntalaisen istunnon oletuskesto on 32 minuuttia
+#   (SESSION_TIMEOUT_MINUTES: 32, apigw/src/shared/config.ts) ja se on liukuva
+#   (express-session `rolling: true`), eli se ei vanhene niin kauan kuin
+#   käyttäjä on aktiivinen. Selainkäyttäjä kirjautuu kerran ja pysyy sisällä.
+#   Evästeetön skripti, joka ei säilytä istuntoevästettä, kirjautuu jokaista
+#   hakua varten uudelleen.
+#
+# Tulkinta: raja-arvo alla on 20 kirjautumista vuorokaudessa. Ihmiseltä se
+#   tarkoittaisi kirjautumista noin 45 minuutin välein koko valveillaoloajan.
+#   Vielä vahvempi tulkinta saadaan yhdistämällä tämä kyselyyn 07: jos saman
+#   kuntalaisen pyyntömäärä jaettuna kirjautumismäärällä on lähellä yhtä,
+#   jokaista hakua kohti tehdään oma kirjautuminen. Yhdistäminen on käsityö:
+#   vie molempien kyselyiden tulos CSV:nä ja yhdistä userIdHash-sarakkeella.
+#
+# HUOMAA: älä käytä tähän palvelun tarkastustapahtumia CitizenWeakLogin tai
+#   CitizenWeakLoginAttempt. Niiden targetId on kuntalaisen sähköpostiosoite
+#   selväkielisenä.
+#
+# Väärä positiivinen: useaa laitetta tai selainta käyttävä perhe, jossa sama
+#   tunnus on jaettu, tuottaa korkean kirjautumismäärän ilman ohjelmaa.
+# Väärä negatiivinen: istuntoevästeen säilyttävä ohjelma kirjautuu yhtä harvoin
+#   kuin selain, eikä näy tässä lainkaan; Suomi.fi-kirjautuminen ei tuota tätä
+#   tapahtumakoodia.
+
+fields @timestamp
+| filter appName = "evaka-api-gw" and type = "app-audit-events"
+| filter eventCode = "evaka.citizen_weak.sign_in"
+| filter userIdHash != ""
+| stats count(*) as kirjautumisia by userIdHash, bin(1d)
+| filter kirjautumisia > 20
+| sort kirjautumisia desc
+| limit 500
