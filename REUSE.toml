@@ -1,0 +1,13 @@
+# SPDX-FileCopyrightText: 2017-2026 City of Espoo
+#
+# SPDX-License-Identifier: LGPL-2.1-or-later
+
+version = 1
+SPDX-PackageName = "evaka-sovellusavaimet"
+SPDX-PackageDownloadLocation = "https://github.com/Wnt/evaka-sovellusavaimet"
+
+[[annotations]]
+path = ["**/package.json", "**/package-lock.json", "**/tsconfig**.json"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2017-2026 City of Espoo"
+SPDX-License-Identifier = "LGPL-2.1-or-later"

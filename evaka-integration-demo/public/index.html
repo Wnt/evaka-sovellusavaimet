@@ -1,0 +1,181 @@
+<!--
+SPDX-FileCopyrightText: 2017-2026 City of Espoo
+
+SPDX-License-Identifier: LGPL-2.1-or-later
+-->
+
+<!doctype html>
+<html lang="fi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>eVaka-integraatiodemo</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="icon" href="data:," />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <h1>eVaka-integraatiodemo</h1>
+        <nav id="nav">
+          <a href="#/kayttoonotto" data-view="kayttoonotto">Käyttöönotto</a>
+          <a href="#/kalenteri" data-view="kalenteri">Kalenteri</a>
+          <a href="#/viestit" data-view="viestit">Viestit</a>
+        </nav>
+        <span id="token-state" class="token-state"></span>
+      </div>
+    </header>
+
+    <div id="banner" class="banner" hidden></div>
+
+    <main>
+      <!-- 1. Käyttöönotto -->
+      <section id="view-kayttoonotto" class="view">
+        <h2>Mitä tämä sovellus tekee</h2>
+        <p class="lead">
+          Tämä demo näyttää lastesi hoitoajat ja kalenteritapahtumat, tarjoaa ne
+          .ics-kalenteritiedostona ja listaa eVakaan saapuneet viestit. Se ei kirjaudu eVakaan
+          sinun tunnuksillasi, vaan käyttää <strong>sovellusavainta</strong>, jonka luot itse ja
+          jonka oikeudet päätät itse.
+        </p>
+
+        <div class="card card-security">
+          <h3>Avain ei koskaan päädy selaimeen</h3>
+          <p>
+            Liittämäsi avain tallennetaan vain tämän demopalvelimen paikalliseen
+            <code>.token</code>-tiedostoon. Selain kutsuu ainoastaan tämän demon omia
+            osoitteita, eikä avain kulje niissä missään muodossa. Näin avain ei ole
+            luettavissa selaimen muistista eikä kehitystyökaluista.
+          </p>
+          <p>
+            Avain on aina heikompi kuin eVaka-tunnuksesi: sillä pääsee vain myönnettyihin
+            oikeuksiin, se vanhenee ja voit mitätöidä sen milloin tahansa eVakassa. Salasanan
+            vaihtaminen, avainten hallinta ja passkey-tunnisteet ovat aina avaimen
+            ulottumattomissa.
+          </p>
+        </div>
+
+        <h3>Tarvittavat oikeudet</h3>
+        <ul id="scope-request" class="scope-request"></ul>
+
+        <h3>Näin luot avaimen</h3>
+        <ol class="steps">
+          <li>Kirjaudu eVakaan: <a id="evaka-link" href="#" target="_blank" rel="noreferrer">avaa eVaka</a></li>
+          <li>Avaa <strong>Omat tiedot</strong></li>
+          <li>Valitse <strong>Sovellusavaimet</strong></li>
+          <li>Luo uusi avain ja myönnä sille täsmälleen yllä luetellut oikeudet</li>
+          <li>Kopioi avain — eVaka näyttää sen vain kerran — ja liitä se alle</li>
+        </ol>
+
+        <form id="token-form" class="card">
+          <label for="token-input">Liitä sovellusavain</label>
+          <input
+            id="token-input"
+            type="password"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="evaka_pat_…"
+          />
+          <div class="row">
+            <button type="submit" id="token-submit">Liitä avain</button>
+            <label class="checkbox">
+              <input type="checkbox" id="token-reveal" /> Näytä avain
+            </label>
+          </div>
+          <p class="hint">
+            Avain tarkistetaan kutsumalla eVakan oikeita rajapintoja. Vain toimiva avain
+            tallennetaan.
+          </p>
+        </form>
+
+        <div id="scope-report" hidden>
+          <h3>Avaimen oikeudet</h3>
+          <p class="hint">
+            Jokainen rivi on oikea kutsu eVakan rajapintaan. Oikeus on myönnetty, jos api-gw ei
+            vastaa <code>403 INSUFFICIENT_SCOPE</code>.
+          </p>
+          <table class="scope-table">
+            <thead>
+              <tr>
+                <th>Oikeus</th>
+                <th>Kutsu</th>
+                <th>Tulos</th>
+              </tr>
+            </thead>
+            <tbody id="scope-report-body"></tbody>
+          </table>
+          <div class="row">
+            <button type="button" id="recheck-scopes" class="secondary">
+              Tarkista oikeudet uudelleen
+            </button>
+            <button type="button" id="forget-token" class="danger">Poista avain</button>
+          </div>
+        </div>
+
+        <div class="card card-danger">
+          <h3>Mitä tapahtuu, kun oikeutta ei ole?</h3>
+          <p>
+            Tämä demo ei pyydä oikeutta <code>children:read</code>. Painike alla kutsuu silti
+            lasten tietojen rajapintaa <code>GET /citizen/children</code>, joka on olemassa ja
+            toimisi juuri sillä oikeudella — mutta ei tällä avaimella. api-gw hylkää kutsun ennen
+            kuin se ehtii eVakan palveluun asti — palvelu ei koskaan näe pyyntöä.
+          </p>
+          <button type="button" id="scope-test" class="danger">Kokeile ilman oikeutta</button>
+          <pre id="scope-test-output" hidden></pre>
+        </div>
+      </section>
+
+      <!-- 2. Kalenteri -->
+      <section id="view-kalenteri" class="view" hidden>
+        <div class="row row-between">
+          <h2>Kalenteri</h2>
+          <div class="row">
+            <button type="button" id="prev-month" class="secondary">‹</button>
+            <span id="month-label" class="month-label"></span>
+            <button type="button" id="next-month" class="secondary">›</button>
+          </div>
+        </div>
+
+        <div class="card card-point">
+          <h3>Miksi eVaka ei tarvitse omaa iCal-rajapintaa</h3>
+          <p>
+            Alla oleva .ics-tiedosto syntyy kokonaan tässä demossa kahdesta tavallisesta
+            kansalaisrajapinnan kutsusta: <code>GET /citizen/calendar-events</code> ja
+            <code>GET /citizen/reservations</code>. eVakaan ei tarvitse rakentaa, versioida
+            eikä suojata erillistä kalenterirajapintaa: kun rajapinta on yleiskäyttöinen ja
+            oikeudet ovat rajattuja, jokainen sovellus voi tuottaa juuri sen muodon, aikavyöhykkeen
+            ja tarkkuustason jonka se haluaa.
+          </p>
+          <p class="requests" id="calendar-requests"></p>
+          <button type="button" id="download-ics">Lataa .ics-tiedosto</button>
+        </div>
+
+        <div id="calendar-warnings"></div>
+        <div id="calendar-grid" class="calendar-grid"></div>
+        <div id="calendar-events"></div>
+      </section>
+
+      <!-- 3. Viestit -->
+      <section id="view-viestit" class="view" hidden>
+        <h2>Viestit</h2>
+        <p class="lead">
+          Viestien lukeminen käyttää oikeutta <code>messages:read</code>. Ketjun merkitseminen
+          luetuksi on <strong>kirjoitusoikeus</strong> <code>messages:mark-read</code> — sama
+          avain, eri oikeus.
+        </p>
+        <p class="requests" id="messages-request"></p>
+        <div class="messages-layout">
+          <div>
+            <ul id="thread-list" class="thread-list"></ul>
+            <div class="row" id="thread-paging"></div>
+          </div>
+          <div id="thread-detail" class="thread-detail">
+            <p class="hint">Valitse viestiketju vasemmalta.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

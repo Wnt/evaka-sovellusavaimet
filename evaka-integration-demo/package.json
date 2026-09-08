@@ -1,0 +1,24 @@
+{
+  "name": "evaka-integration-demo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Demo application that consumes the eVaka citizen API with a scoped citizen API token",
+  "license": "LGPL-2.1-or-later",
+  "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "start": "node src/server.ts",
+    "dev": "node --watch src/server.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.4",
+    "@types/node": "^24.9.2",
+    "typescript": "^5.9.3"
+  }
+}
