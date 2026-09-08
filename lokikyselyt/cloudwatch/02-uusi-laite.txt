@@ -33,7 +33,11 @@
 #
 # VASTA-ESIMERKKI, joka on syytä tietää: ainakin yksi olemassa oleva
 #   integraatio säilyttää laite-evästeen tarkoituksella juuri tämän signaalin
-#   kiertämiseksi. Signaalin puuttuminen ei siis todista mitään.
+#   kiertämiseksi. Ks. ../../liite-olemassaolevat-integraatiot.md, integraatio
+#   numero 3 (JuhaniS/eInk), jonka tekijä kirjoittaa suoraan, että 90 vuorokauden
+#   allekirjoitettu laite-eväste on tallennettava ja toistettava jokaisella
+#   kirjautumisella, jotta uuden selaimen ilmoitusta ei lähetettäisi.
+#   Signaalin puuttuminen ei siis todista mitään.
 #
 # Väärä positiivinen: yksityisen selausikkunan käyttäjä, evästeensä säännöllisesti
 #   tyhjentävä käyttäjä ja joka kerta eri laitteelta kirjautuva käyttäjä

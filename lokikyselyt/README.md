@@ -140,6 +140,14 @@ Kyselytiedostojen kommenttirivit alkavat `#`-merkillä, jonka Logs Insights hyv�
 
 Kaikki `bin()`- ja `datefloor()`-jaksotus tapahtuu **UTC-ajassa**. Suomen aika on UTC+2 talvella ja UTC+3 kesällä; tällä on merkitystä vain kyselyssä `05b`, jossa se on otettu huomioon erikseen.
 
+## Ristiintarkistus tunnettuihin integraatioihin
+
+Repositoriossa on erillinen kartoitus julkisesti löytyvistä kolmannen osapuolen eVaka-integraatioista: [`../liite-olemassaolevat-integraatiot.md`](../liite-olemassaolevat-integraatiot.md). Se on hyödyllinen kahdella tavalla.
+
+Ensinnäkin se kertoo, mitä päätepisteitä tunnetut integraatiot kutsuvat (`auth/weak-login`, `calendar-events`, `messages/received`, `messages/unread-count`, `reservations`, `absences`). Jos kyselyn `01a` tulos sisältää käyttäjäagentteja, joiden pyynnöt osuvat juuri näihin polkuihin, kyseessä on hyvin todennäköisesti samankaltainen integraatio.
+
+Toiseksi se on tämän työkalupakin oma vasta-aineisto: kartoituksen viidestä todennetusta integraatiosta neljä matkii selainta tarkoituksella, yksi säilyttää laite-evästeen nimenomaan uuden laitteen ilmoituksen estämiseksi ja yksi kutsuu `auth/status`-päätepistettä kuten selain. Ne on siis kirjoitettu tavalla, joka heikentää signaaleja 2, 4 ja 6. Tämä on paras käytettävissä oleva näyttö siitä, että kyselyiden tuottama luku on alaraja eikä arvio.
+
 ## Tulosten lukeminen
 
 Yksittäinen kysely ei tuota päätöskelpoista lukua. Se tuottaa joukon `userIdHash`-arvoja ja niiden mittalukuja. Tapa, jolla noista tehdään yksi puolustettava luku päätösesitykseen — mikä lasketaan yhdeksi ulkoisen ohjelman käyttäjäksi, mikä on luottamustaso, ja mitä epäileväinen lukija kysyy — on kuvattu erillisessä tiedostossa [`tulkinta.md`](tulkinta.md). Lue se ennen kuin raportoit mitään lukua eteenpäin.

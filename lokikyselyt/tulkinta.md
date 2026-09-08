@@ -41,6 +41,8 @@ Kuntalainen, jonka pyyntöihin liittyy välityspalvelimen lokissa käyttäjäage
 
 Tämä on ainoa taso, jolla voi sanoa **mitä** ohjelmistoa käytetään. Vaatii välityspalvelimen lokin. Virhemahdollisuus on pieni ja se on yliarvion suuntaan vain siltä osin, kuin robotteja jää karsimatta.
 
+Karsintaa helpottaa ristiintarkistus tiedostoon [`../liite-olemassaolevat-integraatiot.md`](../liite-olemassaolevat-integraatiot.md): siinä on lueteltu, mitä päätepisteitä tunnetut kolmannen osapuolen integraatiot kutsuvat. Käyttäjäagentti, jonka pyynnöt osuvat samaan joukkoon polkuja, on asiakasohjelma; robotti ja valvontapalvelu käyttäytyvät toisin.
+
 ### Taso B — vahva käyttäytymishavainto
 
 Kuntalainen, joka täyttää **vähintään kaksi** seuraavista samana vuorokautena:
@@ -86,7 +88,7 @@ Ei tasojen A ja B osalta. Molemmat vaativat täytetyn `userIdHash`-kentän, joka
 Ei. Yksikkö on `userIdHash`, joka on johdettu henkilön pysyvästä tunnisteesta ja on sama kirjautumistavasta riippumatta. Sama henkilö voi kuitenkin näkyä useassa eri signaalissa; siksi lopullinen luku on yhdiste, ei summa.
 
 **"Entä jos ohjelma tekeytyy selaimeksi?"**
-Silloin se katoaa signaalista 1 kokonaan ja mahdollisesti myös signaaleista 2 ja 4, jos se on kirjoitettu huolella. Tämä on tunnettu ja korjaamaton rajoitus: **raportoitu luku on alaraja, ei arvio.** Todellinen määrä on suurempi, eikä lokeista saa selville kuinka paljon suurempi. Sano tämä päätösesityksessä itse ennen kuin joku muu sanoo sen.
+Silloin se katoaa signaalista 1 kokonaan ja mahdollisesti myös signaaleista 2 ja 4, jos se on kirjoitettu huolella. Näin myös tapahtuu: tiedoston [`../liite-olemassaolevat-integraatiot.md`](../liite-olemassaolevat-integraatiot.md) viidestä todennetusta integraatiosta neljä matkii selainta tarkoituksella, yksi toistaa laite-evästeen estääkseen uuden laitteen ilmoituksen ja yksi kutsuu `auth/status`-päätepistettä kuten selain. Tämä on tunnettu ja korjaamaton rajoitus: **raportoitu luku on alaraja, ei arvio.** Todellinen määrä on suurempi, eikä lokeista saa selville kuinka paljon suurempi. Sano tämä päätösesityksessä itse ennen kuin joku muu sanoo sen.
 
 **"Onko tässä kyse kuntalaisten valvonnasta?"**
 Kyselyt lukevat lokeja, jotka kunta kerää joka tapauksessa tietoturvasyistä, eivätkä ne valitse yhtäkään kenttää, jossa on nimi, henkilötunnus tai sähköpostiosoite. Tulos on lukumääriä ja pseudonyymejä tiivisteitä. Yksittäisen kuntalaisen tunnistaminen tiivisteestä vaatisi erillisen haun eVakan tietokantaan, eikä se ole tämän mittauksen tarkoitus eikä osa yhtäkään näistä kyselyistä.

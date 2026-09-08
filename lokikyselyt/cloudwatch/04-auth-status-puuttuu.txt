@@ -35,7 +35,11 @@
 #   (alla 20 pyyntöä) on siksi tarpeen.
 # Väärä negatiivinen: selainta jäljittelevä ohjelma, joka kutsuu auth/status
 #   säännöllisesti, katoaa tästä kokonaan; tunnistautumattomat pyynnöt on
-#   rajattu ulos, koska niitä ei voi liittää kehenkään.
+#   rajattu ulos, koska niitä ei voi liittää kehenkään. Tämä ei ole teoreettinen
+#   varaus: tiedostossa ../../liite-olemassaolevat-integraatiot.md kartoitetuista
+#   viidestä todennetusta integraatiosta ainakin yksi (cerkkuz/evaka-homeassistant)
+#   kutsuu auth/status-päätepistettä osana normaalia toimintaansa, joten se ei
+#   näy tässä kyselyssä lainkaan.
 
 fields @timestamp
 | filter appName = "evaka-api-gw" and type = "app-requests-received"

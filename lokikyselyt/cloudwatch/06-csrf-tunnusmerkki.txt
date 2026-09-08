@@ -44,7 +44,9 @@
 #   selainlaajennus tai välityspalvelin, joka riisuu mukautettuja otsakkeita.
 # Väärä negatiivinen: valtaosa ohjelmista lisää otsakkeen ensimmäisen 403:n
 #   jälkeen, joten signaali näkyy vain kehitysvaiheessa; se ei löydä yhtäkään
-#   toimivaa integraatiota.
+#   toimivaa integraatiota. Tiedostossa ../../liite-olemassaolevat-integraatiot.md
+#   kartoitetuista integraatioista neljä viidestä lähettää kiinteän
+#   x-evaka-csrf-otsakkeen, eli yksikään niistä ei näkyisi tässä kyselyssä.
 
 fields @timestamp
 | filter appName = "evaka-api-gw"
