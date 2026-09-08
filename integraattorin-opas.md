@@ -10,7 +10,7 @@ Tämä opas on sinulle, joka haluat ohjelman lukevan **omia** eVaka-tietojasi: e
 
 ## 1. Mitä sovellusavain on
 
-Sovellusavain on merkkijono, jonka luot itse eVakassa ja jolla ohjelmasi tunnistautuu sinuna heikosti tunnistautuneena kuntalaisena, samaan tapaan kuin sähköposti ja salasana. Se antaa vain valitsemasi oikeudet, vanhenee valitsemanasi päivänä ja on peruttavissa milloin tahansa. Avaimella pääsee vain erikseen lueteltuihin päätepisteisiin (luku 4); kaikki muu on sen ulottumattomissa. Sovellusavain **ei** ole tapa antaa kolmannen osapuolen sovellukselle pääsyä muiden ihmisten tietoihin, eikä eVaka ole OAuth-valtuutuspalvelin: avaimella pääsee vain sen luoneen kuntalaisen omiin tietoihin.
+Sovellusavain on merkkijono, jonka luot itse eVakassa ja jolla ohjelmasi tunnistautuu sinuna heikosti tunnistautuneena kuntalaisena, samaan tapaan kuin sähköposti ja salasana. Se antaa vain valitsemasi oikeudet, vanhenee valitsemanasi päivänä ja on peruttavissa milloin tahansa. Avaimella pääsee vain erikseen lueteltuihin päätepisteisiin (luku 4); kaikki muu on sen ulottumattomissa. Sovellusavain **ei** ole tapa antaa kolmannen osapuolen sovellukselle pääsyä muiden ihmisten tietoihin, eikä eVaka ole OAuth-valtuutuspalvelin: avaimella pääsee vain sen luoneen kuntalaisen näkymään. Huomaa kuitenkin, että oma näkymäsi sisältää muidenkin ihmisten tietoja: lapsesi, lapsen toisen huoltajan ja henkilöstön (luku 9).
 
 ## 2. Avaimen luonti
 
@@ -18,7 +18,7 @@ Sovellusavain on merkkijono, jonka luot itse eVakassa ja jolla ohjelmasi tunnist
 2. Avaa **Omat tiedot → Sovellusavaimet**, anna avaimelle nimi, valitse oikeudet ja voimassaoloaika, ja luo avain.
 3. Kopioi avain talteen heti — **se näytetään vain kerran**.
 
-Rajat: enintään **10 avainta** kuntalaista kohti, voimassaolo enintään **180 vuorokautta**, vanhenemispäivä on pakollinen. Säilytä avain palvelimen puolella (ympäristömuuttuja tai tiedosto oikeuksin `0600`), älä koskaan versionhallinnassa tai selaimessa: esimerkkisovellus tallentaa avaimen `.token`-tiedostoon, ja selain kutsuu vain sovelluksen omaa palvelinta.
+Rajat: enintään **10 avainta** kuntalaista kohti, voimassaolo enintään **180 vuorokautta**, vanhenemispäivä on pakollinen. Kun luot avaimen, jokaiselle yhteisen lapsen toiselle huoltajalle lähetetään sähköposti, jossa kerrotaan, että ohjelmalla on nyt pääsy lapsen tietoihin. Säilytä avain palvelimen puolella (ympäristömuuttuja tai tiedosto oikeuksin `0600`), älä koskaan versionhallinnassa tai selaimessa: esimerkkisovellus tallentaa avaimen `.token`-tiedostoon, ja selain kutsuu vain sovelluksen omaa palvelinta.
 
 ## 3. Pyynnön muoto
 
@@ -32,23 +32,23 @@ curl -H "Authorization: Bearer evaka_pat_<43 merkkiä>" \
 
 ## 4. Oikeudet
 
-Oikeudet ovat kiinteä sanasto, jota ei voi päätellä osoitteesta: jokainen oikeus kattaa täsmälleen alla luetellut päätepisteet, eikä avaimella pääse mihinkään muuhun, valitsit mitä tahansa. Polkumuuttuja (`{childId}`) vastaa yhtä osoitteen osaa. Ajossa olevan version luettelon saa manifestista (luku 6).
+Oikeudet ovat kiinteä sanasto, jota ei voi päätellä osoitteesta: jokainen oikeus kattaa täsmälleen alla luetellut päätepisteet, eikä avaimella pääse mihinkään muuhun, valitsit mitä tahansa. Polkumuuttuja (`{childId}`) vastaa yhtä osoitteen osaa. Ajossa olevan version luettelon saa manifestista (luku 6). Sarake "Kenen tietoja" kertoo, keiden henkilötietoja vastauksessa on.
 
-| Oikeus | Päätepisteet | Mitä sisältää |
-| --- | --- | --- |
-| `personal-data:read` | `GET /citizen/personal-data/email-verification`, `GET /citizen/personal-data/notification-settings` | Sähköpostin vahvistustila ja ilmoitusasetukset (vain luku) |
-| `children:read` | `GET /citizen/children`, `GET /citizen/children/{childId}/attendance-summary/{yearMonth}`, `GET /citizen/children/{childId}/service-needs` | Lapset nimineen, ryhmineen ja yksiköineen; läsnäoloyhteenvedot ja palveluntarpeet |
-| `calendar:read` | `GET /citizen/calendar-events`, `GET /citizen/calendar-events/{eventId}/ics`, `GET /citizen/calendar-event-times/{eventTimeId}/ics`, `GET /citizen/units`, `POST /citizen/preschool-operational-dates` | Tapahtumat ja keskusteluajat (myös .ics), yksiköt, esiopetuksen toimintapäivät (kysely, vaikka POST) |
-| `reservations:read` | `GET /citizen/reservations` | Läsnäolovaraukset ja poissaolot |
-| `absences:read` | `GET /citizen/absence-application` | Poissaolohakemukset |
-| `holiday-periods:read` | `GET /citizen/holiday-period`, `GET /citizen/holiday-period/questionnaire` | Loma-ajat ja lomakyselyt |
-| `notifications:read` | `GET /citizen/daily-service-time-notifications`, `GET /citizen/child-documents/unread-count`, `GET /citizen/pedagogical-documents/unread-count` | Hoitoaikailmoitukset ja lukemattomien asiakirjojen lukumäärät lapsittain (ei asiakirjojen nimiä tai tyyppejä) |
-| `notifications:dismiss` | `POST /citizen/daily-service-time-notifications/dismiss` | Hoitoaikailmoituksen kuittaus (kirjoitus) |
-| `messages:read` | `GET /citizen/messages/my-account`, `GET /citizen/messages/received`, `GET /citizen/messages/recipients`, `GET /citizen/messages/unread-count` | Viestiketjut, vastaanottajat, lukemattomien määrä |
-| `messages:mark-read` | `PUT /citizen/messages/threads/{threadId}/read`, `PUT /citizen/messages/threads/{threadId}/last-received-message/read` | Ketjun merkitseminen luetuksi (kirjoitus) |
-| `attachments:read` | `GET /citizen/attachments/{attachmentId}/download/{requestedFilename}` | Viestien liitteiden lataus |
+| Oikeus | Päätepisteet | Mitä sisältää | Kenen tietoja |
+| --- | --- | --- | --- |
+| `personal-data:read` | `GET /citizen/personal-data/email-verification`, `GET /citizen/personal-data/notification-settings` | Sähköpostiosoite ja sen vahvistustila; mistä viestityypeistä saat sähköpostia (vain luku) | Sinun |
+| `children:read` | `GET /citizen/children`, `GET /citizen/children/{childId}/attendance-summary/{yearMonth}`, `GET /citizen/children/{childId}/service-needs` | Lapset nimineen, ryhmineen ja yksiköineen, sijoitusmuoto ja sallitut toiminnot; läsnäolopäivien määrä; palveluntarpeet | Lasten |
+| `calendar:read` | `GET /citizen/calendar-events`, `GET /citizen/calendar-events/{eventId}/ics`, `GET /citizen/calendar-event-times/{eventTimeId}/ics`, `GET /citizen/units?type=…`, `POST /citizen/preschool-operational-dates` | Tapahtumat otsikoineen ja kuvauksineen, keskusteluajat (myös .ics), yksiköt, esiopetuksen toimintapäivät (kysely, vaikka POST) | Lasten; henkilöstön kirjoittama teksti; keskusteluaika näkyy, vaikka toinen huoltaja varasi sen |
+| `reservations:read` | `GET /citizen/reservations?from=…&to=…` | Läsnäolovaraukset, toteutuneet läsnäolot ja poissaolot lajeineen päivittäin (`absence.type`, mm. `SICKLEAVE`); varauksen muokkaajan nimi (`modifiedBy`) | Lasten, myös **sairauspoissaolot**; toisen huoltajan tai työntekijän nimi |
+| `absences:read` | `GET /citizen/absence-application?childId=…` | Poissaolohakemukset: jakso, vapaa perustelu, tekijän nimi, tila, päättäjän nimi, hylkäyksen perustelu | Lasten; toisen huoltajan (tekijä); työntekijän (päättäjä); vapaata tekstiä |
+| `holiday-periods:read` | `GET /citizen/holiday-period`, `GET /citizen/holiday-period/questionnaire` | Loma-ajat ja avoin lomakysely aiempine vastauksineen | Lasten; vastauksen voi olla antanut toinen huoltaja |
+| `notifications:read` | `GET /citizen/daily-service-time-notifications`, `GET /citizen/child-documents/unread-count`, `GET /citizen/pedagogical-documents/unread-count` | Hoitoaikailmoitusten tunnisteet ja lukemattomien asiakirjojen lukumäärät lapsittain (ei asiakirjojen nimiä tai tyyppejä) | Lasten (lukumäärät) |
+| `notifications:dismiss` | `POST /citizen/daily-service-time-notifications/dismiss` | Hoitoaikailmoituksen kuittaus (kirjoitus) | – |
+| `messages:read` | `GET /citizen/messages/my-account`, `GET /citizen/messages/received`, `GET /citizen/messages/recipients`, `GET /citizen/messages/unread-count` | Viestiketjut sisältöineen, lähettäjineen ja liitteiden nimineen; vastaanottajat ja henkilöstön poissaolojaksot; lukemattomien määrä. Arkaluonteiseksi merkitty ketju tulee ilman sisältöä | Sinun; **toisen huoltajan** (kaikki huoltajat ovat samassa ketjussa); lasten; henkilöstön |
+| `messages:mark-read` | `PUT /citizen/messages/threads/{threadId}/read` | Ketjun merkitseminen luetuksi (kirjoitus). Sammuttaa lukematon-merkin ja sähköposti-ilmoituksen | – |
+| `attachments:read` | `GET /citizen/attachments/{attachmentId}/download/{requestedFilename}` | Viestien liitteiden lataus | Kenen tahansa ketjun osapuolen |
 
-Pyydä vain ne oikeudet, joita ohjelmasi käyttää: esimerkkisovellus pyytää neljä (`calendar:read`, `reservations:read`, `messages:read`, `messages:mark-read`). Kaksi kirjoitusoikeutta ovat kuittauksia: mitään ei luoda, peruta, lähetetä tai arkistoida.
+Pyydä vain ne oikeudet, joita ohjelmasi käyttää: esimerkkisovellus pyytää neljä (`calendar:read`, `reservations:read`, `messages:read`, `messages:mark-read`). Kaksi kirjoitusoikeutta ovat kuittauksia: mitään ei luoda, peruta, lähetetä tai arkistoida. `PUT …/last-received-message/read` ei kuulu `messages:mark-read`-oikeuteen, koska se merkitsee viestin *lukemattomaksi*.
 
 **Mitä avain ei voi koskaan tehdä**, myönnetyistä oikeuksista riippumatta: kaikkea, mitä taulukossa ei ole. Muun muassa hakemukset, päätökset, tuloselvitykset, lapsen asiakirjat ja niiden luettelo, perheenjäsenten tiedot, lasten kuvat, varausten ja poissaolojen teko, viestien lähetys ja arkistointi, henkilötietojen muutokset, salasanan, passkeyn ja sovellusavainten hallinta sekä kirjautuminen vastaavat aina 403. Tunnistautumista vaatimattomat `/citizen/public/*`-osoitteet toimivat avaimen kanssa ja ilman.
 
@@ -61,7 +61,7 @@ Avain tunnistautuu aina heikosti, ja taulukkoon otetaan vain päätepisteitä, j
 | Avain vanhentunut, peruttu, tuntematon tai väärän muotoinen | 401 | `{ "error": "INVALID_TOKEN" }` | **Lopeta.** Poista avain käytöstä ja pyydä käyttäjältä uusi. Älä yritä uudelleen. |
 | Oikeutta ei ole myönnetty tai päätepiste ei ole avaimella käytettävissä | 403 | `{ "error": "INSUFFICIENT_SCOPE", "requiredScope": "messages:mark-read" }` | Kerro puuttuva oikeus (`requiredScope`; puuttuu, jos päätepiste ei ole lainkaan avainten tavoitettavissa). Älä yritä uudelleen samalla avaimella. |
 | Liian monta pyyntöä (oletus 60/min avainta kohti) | 429 | `{ "error": "RATE_LIMITED" }` + `Retry-After`-otsake | Odota `Retry-After`-sekunnit ja harvenna pollausta. |
-| Sovellusavaimet eivät ole käytössä tässä kunnassa | 404 avainpäätepisteissä | – | Ominaisuus on kytketty pois. Ota yhteys kuntaan. |
+| Sovellusavaimet eivät ole käytössä tässä kunnassa | 401 avainpyynnöissä, 404 avainten hallinnassa | `{ "error": "INVALID_TOKEN" }` | Ominaisuus on kytketty pois; avainpyyntö ei erota tätä perutusta avaimesta. Tarkista manifesti ja ota yhteys kuntaan. |
 | Sovellusavaimet pysäytetty häiriön ajaksi | 503 | `{ "error": "API_TOKENS_DISABLED" }` | Tilapäistä; yritä myöhemmin uudelleen kasvavalla viiveellä. |
 | Palvelinvirhe tai yhteysongelma | 5xx / – | vaihtelee | Yritä uudelleen kasvavalla viiveellä, enintään muutaman kerran. |
 
@@ -73,12 +73,16 @@ Jokainen kunta ajaa omaa eVaka-versiotaan omaan tahtiinsa, eikä kuntalaisen raj
 
 ## 7. Kohteliaisuussäännöt
 
-Älä pollaa tiheämmin kuin tarpeen — 15 minuutin väli riittää useimpiin tarkoituksiin. Avaimen tarkistus on välimuistissa 60 sekuntia, joten peräkkäiset pyynnöt ovat kevyitä ja vanhentunut avain voi toimia vielä hetken vanhenemisensa jälkeen; "Viimeksi käytetty" -aika päivittyy 5 minuutin tarkkuudella. Anna ohjelmallesi kuvaava nimi jo avainta luodessasi.
+Älä pollaa tiheämmin kuin tarpeen — 15 minuutin väli riittää useimpiin tarkoituksiin. Avain tarkistetaan palvelimella jokaisella pyynnöllä, joten peruutus ja vanheneminen tehoavat heti; "Viimeksi käytetty" -aika päivittyy 5 minuutin tarkkuudella. Anna ohjelmallesi kuvaava nimi jo avainta luodessasi: nimi on samalla ilmoitus siitä, mihin tarkoitukseen tietoja haet.
 
 ## 8. Jos avain vuotaa
 
-1. Peru avain heti: **Omat tiedot → Sovellusavaimet → Peru** — vaikutus on välitön, myös välimuistista riippumatta.
+1. Peru avain heti: **Omat tiedot → Sovellusavaimet → Peru** — vaikutus on välitön.
 2. Luo uusi avain, mieluiten suppeammilla oikeuksilla.
 3. Päivitä avain ohjelmaasi ja selvitä, mistä vanha pääsi vuotamaan.
 
 Peruttu avain ei ole enää kenenkään käytettävissä, eikä sen peruminen vaadi salasanan vaihtoa. Jos et enää käytä ohjelmaa, peru avain silloinkin: pelkkä poistaminen ohjelmasta ei mitätöi sitä eVakassa.
+
+## 9. Mistä vastaat
+
+Kunta ei hyväksy, rekisteröi eikä valvo ohjelmaasi: se on sinun välineesi, ja kun tiedot ovat siirtyneet ohjelmalle, niiden käsittely on sinun ja ohjelman ylläpitäjän asia, ei kunnan. Muista, että mukana on muidenkin ihmisten tietoja: lastesi tiedot, mukaan lukien sairauspoissaolot ja hakemusten perustelut, lapsen toisen huoltajan viestit ja nimi sekä henkilöstön nimet ja poissaolot. Viesteissä ja perusteluissa on vapaata tekstiä, joka voi sisältää mitä tahansa kirjoittaja on halunnut kertoa. Mieti siksi ennen kuin syötät vastauksia pilvipalveluun tai tekoälyavustimeen, tallenna vain se, mitä ohjelmasi tarvitsee, ja poista tiedot, kun et enää tarvitse niitä. Jos jaat ohjelmasi muille, heidän avaimensa hakevat heidän näkymänsä, ja vastuu siirtyy heille samalla tavalla.
