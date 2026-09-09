@@ -538,14 +538,14 @@ function renderThread(thread, readResult) {
       h(
         'div',
         { class: 'row' },
-        h('button', { onclick: () => markRead(thread.id) }, 'Merkitse luetuksi (messages:mark-read)')
+        h('button', { onclick: () => markRead(thread.id) }, 'Merkitse luetuksi (MESSAGES_MARK_READ)')
       )
     )
     detail.appendChild(
       h(
         'p',
         { class: 'hint' },
-        'Tämä on kirjoitusoikeus: sama avain, eri scope. Ilman oikeutta messages:mark-read api-gw vastaisi 403.'
+        'Tämä on kirjoitusoikeus: sama avain, eri scope. Ilman oikeutta MESSAGES_MARK_READ api-gw vastaisi 403.'
       )
     )
   }

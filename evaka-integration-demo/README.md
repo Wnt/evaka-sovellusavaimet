@@ -31,10 +31,10 @@ ei ole — Node ajaa `.ts`-tiedostot suoraan.
    yleiskäyttöinen ja oikeudet rajattuja, erikoistarkoituksiin tehtyjä rajapintoja
    ei tarvitse rakentaa, versioida eikä suojata erikseen.
 5. **Kirjoitusoikeus on eri asia kuin lukuoikeus.** Viestin merkitseminen luetuksi
-   (`PUT /citizen/messages/threads/{id}/read`) vaatii oikeuden `messages:mark-read`.
+   (`PUT /citizen/messages/threads/{id}/read`) vaatii oikeuden `MESSAGES_MARK_READ`.
 6. **Puuttuva oikeus näkyy heti.** Painike *Kokeile ilman oikeutta* kutsuu
    lasten tietojen rajapintaa `GET /citizen/children`, jota demo ei pyytänyt. Rajapinta on
-   olemassa ja toimisi oikealla oikeudella (`children:read`) — tämä avain vain ei sitä saanut —
+   olemassa ja toimisi oikealla oikeudella (`CHILDREN_READ`) — tämä avain vain ei sitä saanut —
    ja demo näyttää raa'an `403 INSUFFICIENT_SCOPE` -vastauksen sellaisenaan.
 7. **Arkaluonteinen sisältö pysyy piilossa.** Sovellusavain tunnistautuu heikosti
    tunnistautuneena kansalaisena, joten eVaka palauttaa arkaluonteiset viestiketjut
@@ -46,10 +46,10 @@ Luo avain, jolle myönnät täsmälleen nämä oikeudet:
 
 | Oikeus | Mihin demo käyttää sitä |
 | --- | --- |
-| `calendar:read` | Kalenteritapahtumat ja keskusteluajat |
-| `reservations:read` | Hoitoajat ja poissaolot |
-| `messages:read` | Saapuneiden viestiketjujen listaus ja lukeminen |
-| `messages:mark-read` | Viestiketjun merkitseminen luetuksi |
+| `CALENDAR_READ` | Kalenteritapahtumat ja keskusteluajat |
+| `RESERVATIONS_READ` | Hoitoajat ja poissaolot |
+| `MESSAGES_READ` | Saapuneiden viestiketjujen listaus ja lukeminen |
+| `MESSAGES_MARK_READ` | Viestiketjun merkitseminen luetuksi |
 
 Demo toimii myös vajailla oikeuksilla: puuttuva oikeus näkyy varoituksena eikä
 kaada näkymää. Näin kannattaa jokaisen integraation toimia.
@@ -121,14 +121,14 @@ Kertoo suomeksi, mitä sovellus tekee ja mitä oikeuksia se tarvitsee, ja opasta
 avaimen luomisessa. Liitetty avain tarkistetaan kutsumalla eVakan oikeita
 rajapintoja, ja jokaisen oikeuden tulos näytetään taulukossa kutsuosoitteineen.
 
-Kirjoitusoikeus `messages:mark-read` tarkistetaan kutsumalla viestiketjua, jota ei ole
+Kirjoitusoikeus `MESSAGES_MARK_READ` tarkistetaan kutsumalla viestiketjua, jota ei ole
 olemassa. Oikeustarkistus tapahtuu api-gw:ssä ennen kuin pyyntö etenee eVakan
 palveluun, joten kutsu vastaa kysymykseen "olisiko tämä sallittu" ilman mitään
 sivuvaikutusta.
 
 Samassa näkymässä on painike **Kokeile ilman oikeutta**, joka kutsuu tarkoituksella
 rajapintaa `GET /citizen/children` ja näyttää vastauksen sellaisenaan. Rajapinta on
-kansalaisrajapinnan sallittulistalla (`children:read`), mutta tämä demo ei ole koskaan
+kansalaisrajapinnan sallittulistalla (`CHILDREN_READ`), mutta tämä demo ei ole koskaan
 pyytänyt sitä oikeutta, joten kutsu osoittaa aidon, puuttuvasta oikeudesta johtuvan eston —
 ei sitä, että rajapintaa ei olisi lainkaan avattu sovelluksille.
 

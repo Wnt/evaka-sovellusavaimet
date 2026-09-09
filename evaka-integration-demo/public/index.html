@@ -115,7 +115,7 @@ SPDX-License-Identifier: LGPL-2.1-or-later
         <div class="card card-danger">
           <h3>Mitä tapahtuu, kun oikeutta ei ole?</h3>
           <p>
-            Tämä demo ei pyydä oikeutta <code>children:read</code>. Painike alla kutsuu silti
+            Tämä demo ei pyydä oikeutta <code>CHILDREN_READ</code>. Painike alla kutsuu silti
             lasten tietojen rajapintaa <code>GET /citizen/children</code>, joka on olemassa ja
             toimisi juuri sillä oikeudella — mutta ei tällä avaimella. api-gw hylkää kutsun ennen
             kuin se ehtii eVakan palveluun asti — palvelu ei koskaan näe pyyntöä.
@@ -159,8 +159,8 @@ SPDX-License-Identifier: LGPL-2.1-or-later
       <section id="view-viestit" class="view" hidden>
         <h2>Viestit</h2>
         <p class="lead">
-          Viestien lukeminen käyttää oikeutta <code>messages:read</code>. Ketjun merkitseminen
-          luetuksi on <strong>kirjoitusoikeus</strong> <code>messages:mark-read</code> — sama
+          Viestien lukeminen käyttää oikeutta <code>MESSAGES_READ</code>. Ketjun merkitseminen
+          luetuksi on <strong>kirjoitusoikeus</strong> <code>MESSAGES_MARK_READ</code> — sama
           avain, eri oikeus.
         </p>
         <p class="requests" id="messages-request"></p>

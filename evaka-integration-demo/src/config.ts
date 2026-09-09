@@ -33,8 +33,8 @@ export const publicDir = resolve(rootDir, 'public')
  * the message list are all built from endpoints that already exist in the citizen API.
  */
 export const requiredScopes = [
-  'calendar:read',
-  'reservations:read',
-  'messages:read',
-  'messages:mark-read'
+  'CALENDAR_READ',
+  'RESERVATIONS_READ',
+  'MESSAGES_READ',
+  'MESSAGES_MARK_READ'
 ] as const

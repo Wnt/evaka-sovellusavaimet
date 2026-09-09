@@ -54,7 +54,7 @@ function scopeProbes(): ScopeProbe[] {
   const { from, to } = probeRange()
   return [
     {
-      scope: 'calendar:read',
+      scope: 'CALENDAR_READ',
       label: 'Kalenteritapahtumien luku',
       why: 'Näyttää kalenterinäkymän tapahtumat ja keskusteluajat.',
       request: {
@@ -64,7 +64,7 @@ function scopeProbes(): ScopeProbe[] {
       }
     },
     {
-      scope: 'reservations:read',
+      scope: 'RESERVATIONS_READ',
       label: 'Varausten luku',
       why: 'Näyttää hoitoajat ja poissaolot kalenterissa ja .ics-tiedostossa.',
       request: {
@@ -74,13 +74,13 @@ function scopeProbes(): ScopeProbe[] {
       }
     },
     {
-      scope: 'messages:read',
+      scope: 'MESSAGES_READ',
       label: 'Viestien luku',
       why: 'Listaa saapuneet viestiketjut.',
       request: { method: 'GET', path: '/citizen/messages/unread-count' }
     },
     {
-      scope: 'messages:mark-read',
+      scope: 'MESSAGES_MARK_READ',
       label: 'Viestien merkitseminen luetuksi',
       why: 'Merkitsee avatun viestiketjun luetuksi eVakassa.',
       request: {
@@ -574,7 +574,7 @@ app.post(
       ok: true,
       request: `PUT ${requestUrl(request)}`,
       status: result.status,
-      message: 'Ketju merkittiin luetuksi eVakassa oikeudella messages:mark-read.'
+      message: 'Ketju merkittiin luetuksi eVakassa oikeudella MESSAGES_MARK_READ.'
     })
   })
 )
@@ -583,9 +583,9 @@ app.post(
 
 /**
  * Calls an endpoint this demo deliberately did not ask for. `GET /citizen/children` is on the
- * citizen API's allowlist — it is guarded by `children:read` — but this demo only ever requested
- * `calendar:read`, `reservations:read`, `messages:read` and `messages:mark-read`, so the token it
- * holds does not carry `children:read`. The api-gw rejects the request before the service ever
+ * citizen API's allowlist — it is guarded by `CHILDREN_READ` — but this demo only ever requested
+ * `CALENDAR_READ`, `RESERVATIONS_READ`, `MESSAGES_READ` and `MESSAGES_MARK_READ`, so the token it
+ * holds does not carry `CHILDREN_READ`. The api-gw rejects the request before the service ever
  * sees it, which is a genuine scope refusal: the endpoint exists and is reachable with the right
  * token, just not with this one.
  */
@@ -627,12 +627,12 @@ app.get(
     }
     res.json({
       request: `${FORBIDDEN_PROBE.method} ${requestUrl(FORBIDDEN_PROBE)}`,
-      requiredScope: 'children:read',
+      requiredScope: 'CHILDREN_READ',
       denied,
       status,
       body,
       explanation: denied
-        ? 'api-gw hylkäsi kutsun ennen kuin se ehti eVakan palveluun asti. Avaimelle ei ole myönnetty oikeutta children:read.'
+        ? 'api-gw hylkäsi kutsun ennen kuin se ehti eVakan palveluun asti. Avaimelle ei ole myönnetty oikeutta CHILDREN_READ.'
         : 'Kutsu meni läpi. Avaimelle on ilmeisesti myönnetty laajemmat oikeudet kuin tämä demo pyytää.'
     })
   })
